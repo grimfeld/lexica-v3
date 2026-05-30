@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/*
+ * Lexica design tokens — see docs/DESIGN-SYSTEM.md
+ * Calm / editorial. Paper-beige base, terracotta accent (actions only),
+ * muted rose (Miss) / sage (Got) for review. Avoid saturated color.
+ */
+
+@theme {
+  /* Chrome type tiers */
+  --font-display: "Newsreader", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Content / IPA tier (per-Language font overrides this at runtime) */
+  --font-content: "Noto Serif", ui-serif, serif;
+  --font-ipa: "Charis SIL", "Noto Sans", ui-sans-serif, sans-serif;
+
+  --radius-md: 7px;
+}
+
+/* Light — paper */
+:root {
+  --color-bg: oklch(0.97 0.012 85);          /* warm paper beige */
+  --color-surface: oklch(0.99 0.008 85);     /* raised card */
+  --color-ink: oklch(0.28 0.015 60);         /* warm dark ink, not #000 */
+  --color-ink-muted: oklch(0.52 0.012 60);
+  --color-border: oklch(0.88 0.012 80);
+
+  --color-accent: oklch(0.62 0.13 45);       /* terracotta — actions only */
+  --color-accent-ink: oklch(0.98 0.01 85);   /* text on accent */
+
+  --color-miss: oklch(0.58 0.10 18);         /* muted cool rose */
+  --color-got: oklch(0.60 0.07 135);         /* muted sage */
+}
+
+/* Dark — warm inverted, never pure black */
+.dark {
+  --color-bg: oklch(0.22 0.012 60);
+  --color-surface: oklch(0.26 0.012 60);
+  --color-ink: oklch(0.92 0.012 85);
+  --color-ink-muted: oklch(0.68 0.012 75);
+  --color-border: oklch(0.34 0.012 60);
+
+  --color-accent: oklch(0.66 0.12 45);
+  --color-accent-ink: oklch(0.20 0.01 60);
+
+  --color-miss: oklch(0.62 0.09 18);
+  --color-got: oklch(0.64 0.06 135);
+}
+
+/* Map tokens into Tailwind's color/utility space */
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-border: var(--color-border);
+  --color-accent: var(--color-accent);
+  --color-accent-ink: var(--color-accent-ink);
+  --color-miss: var(--color-miss);
+  --color-got: var(--color-got);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--color-ink);
+}
+
+/* Minimal motion — respect reduced-motion (ADR-0005 / design system) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
