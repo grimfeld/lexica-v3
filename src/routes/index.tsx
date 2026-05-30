@@ -1,16 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+/*
+ * Landing depends on device, but routing-wise both lead into the app. Desktop
+ * lands on Notes (authoring station), mobile on Review (companion) — the layout
+ * decides emphasis; we default the route to Notes and let mobile users tap
+ * Review. (ADR-0011)
+ */
 export const Route = createFileRoute("/")({
-  component: Home,
+  beforeLoad: () => {
+    throw redirect({ to: "/notes" });
+  },
 });
-
-export function Home() {
-  return (
-    <main className="flex min-h-full flex-col items-center justify-center gap-3 p-8">
-      <h1 className="text-4xl">Lexica</h1>
-      <p className="text-[var(--color-ink-muted)]">
-        You bring the words. It helps you keep them.
-      </p>
-    </main>
-  );
-}
