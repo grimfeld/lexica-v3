@@ -23,13 +23,17 @@ function isFilled(v: unknown): boolean {
 function validateTable(field: TableField, value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
   const grid = value as Record<string, unknown>;
-  for (const row of field.rows) {
+  // Tables may be partial — the user fills only the rows/cells they know.
+  // Validate only what IS present: each present row must be a declared row, and
+  // each present cell must be a declared col with a string value. Missing
+  // rows/cells are allowed.
+  for (const row of Object.keys(grid)) {
+    if (!field.rows.includes(row)) return false;
     const cells = grid[row];
     if (typeof cells !== "object" || cells === null) return false;
     const rowObj = cells as Record<string, unknown>;
-    for (const col of field.cols) {
-      // Cell must be present and a string (may be empty — not every cell is
-      // filled, but the structure must declare every row/col).
+    for (const col of Object.keys(rowObj)) {
+      if (!field.cols.includes(col)) return false;
       if (typeof rowObj[col] !== "string") return false;
     }
   }

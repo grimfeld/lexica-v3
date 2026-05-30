@@ -44,11 +44,20 @@ describe("validateFields", () => {
     if (!r.ok) expect(r.errors).toContainEqual({ key: "term", error: "type" });
   });
 
-  it("rejects a table missing declared rows/cols", () => {
+  it("accepts a partial table (only known cells filled)", () => {
     const r = validateFields(fields, {
       term: "x",
       meaning: "y",
-      table: { present: { je: "a" } }, // missing 'tu', missing 'past'
+      table: { present: { je: "a" } }, // 'tu'/'past' omitted — allowed
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("rejects a table cell under an undeclared column", () => {
+    const r = validateFields(fields, {
+      term: "x",
+      meaning: "y",
+      table: { present: { bogus: "a" } },
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors.some((e) => e.key === "table")).toBe(true);
