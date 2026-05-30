@@ -8,13 +8,13 @@ interface Call {
   params: unknown[];
 }
 
-function fakeDb() {
+function fakeDb(selectRows: unknown[] = []) {
   const calls: Call[] = [];
   const db: SqlExecutor = {
     execute: async (query, params = []) => {
       calls.push({ query, params });
     },
-    select: async () => [],
+    select: async () => selectRows as never,
   };
   return { db, calls };
 }
@@ -87,6 +87,21 @@ describe("notes repository", () => {
     await repo.deleteNote("n1");
     expect(calls.some((c) => c.query.includes("notes") && c.query.includes("deleted_at"))).toBe(true);
     expect(calls.some((c) => c.query.includes("cards") && c.query.includes("deleted_at"))).toBe(true);
+  });
+
+  it("gradeCard reads, re-schedules, and persists new FSRS state", async () => {
+    const { newCardState, serializeState } = await import("../scheduling/engine");
+    const fsrs = serializeState(newCardState(new Date(1000)));
+    const { db, calls } = fakeDb([{ id: "n1:fwd", fsrs }]);
+    const repo = createNotesRepository(db, fixedNow);
+
+    await repo.gradeCard("n1:fwd", true);
+
+    const update = calls.find((c) => c.query.includes("SET fsrs"));
+    expect(update).toBeDefined();
+    expect(update!.params.at(-1)).toBe("n1:fwd");
+    // The persisted state must differ from the input (it was rescheduled).
+    expect(update!.params[0]).not.toBe(fsrs);
   });
 
   it("setPaused flips the paused flag and marks dirty", async () => {

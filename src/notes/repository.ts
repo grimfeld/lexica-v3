@@ -1,6 +1,7 @@
 import type { DerivedCard, FieldValues } from "../note-types/contract";
 import { getNoteType } from "../note-types/registry";
 import { diffCards } from "./card-diff";
+import { newCardState, grade, serializeState, deserializeState } from "../scheduling/engine";
 
 /*
  * Persistence for Notes and their derived Cards. The DB executor is injected so
@@ -29,12 +30,13 @@ interface CardRow {
 /** Caller decides, per changed card, whether to reset its FSRS state (ADR-0009). */
 export type ResetDecision = (sliceKey: string) => boolean;
 
-function freshFsrs(): string {
-  // Placeholder until the FSRS engine lands (T5). A new card starts due now.
-  return JSON.stringify({ state: "new" });
+interface FsrsRow {
+  id: string;
+  fsrs: string;
 }
 
 export function createNotesRepository(db: SqlExecutor, now: () => number) {
+  const freshFsrs = () => serializeState(newCardState(new Date(now())));
   async function insertCard(noteId: string, card: DerivedCard): Promise<void> {
     await db.execute(
       `INSERT INTO cards (id, note_id, slice_key, fsrs, updated_at, dirty)
@@ -131,5 +133,20 @@ export function createNotesRepository(db: SqlExecutor, now: () => number) {
     return rows.map((r) => r.slice_key);
   }
 
-  return { createNote, updateNote, setPaused, deleteNote, liveCardSlices };
+  /** Apply a binary grade to a Card and persist its new FSRS state. */
+  async function gradeCard(cardId: string, pass: boolean): Promise<void> {
+    const rows = await db.select<FsrsRow>(
+      `SELECT id, fsrs FROM cards WHERE id = ? AND deleted_at IS NULL`,
+      [cardId],
+    );
+    if (rows.length === 0) throw new Error(`Card not found: ${cardId}`);
+    const ts = now();
+    const next = grade(deserializeState(rows[0].fsrs), pass, new Date(ts));
+    await db.execute(
+      `UPDATE cards SET fsrs = ?, updated_at = ?, dirty = 1 WHERE id = ?`,
+      [serializeState(next), ts, cardId],
+    );
+  }
+
+  return { createNote, updateNote, setPaused, deleteNote, liveCardSlices, gradeCard };
 }
