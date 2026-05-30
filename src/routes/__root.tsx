@@ -1,14 +1,15 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext } from "@tanstack/react-router";
+import { registerAllNoteTypes } from "../note-types/register-all";
+import { AppLayout } from "../layout/AppLayout";
 
 interface RouterContext {
   queryClient: QueryClient;
 }
 
-export const Route = createRootRouteWithContext<RouterContext>()({
-  component: RootLayout,
-});
+// Register the built-in Note Types once, at module load (before any route renders).
+registerAllNoteTypes();
 
-function RootLayout() {
-  return <Outlet />;
-}
+export const Route = createRootRouteWithContext<RouterContext>()({
+  component: AppLayout,
+});

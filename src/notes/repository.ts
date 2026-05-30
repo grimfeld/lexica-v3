@@ -125,12 +125,37 @@ export function createNotesRepository(db: SqlExecutor, now: () => number) {
     );
   }
 
+  async function listByLanguage(languageId: string): Promise<
+    { id: string; type: string; fields: string; paused: number }[]
+  > {
+    return db.select(
+      `SELECT id, type, fields, paused FROM notes
+       WHERE language_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC`,
+      [languageId],
+    );
+  }
+
   async function liveCardSlices(noteId: string): Promise<string[]> {
     const rows = await db.select<CardRow>(
       `SELECT id, slice_key FROM cards WHERE note_id = ? AND deleted_at IS NULL`,
       [noteId],
     );
     return rows.map((r) => r.slice_key);
+  }
+
+  /** Cards of active (non-paused, live) notes in a language, with note source + fsrs. */
+  async function reviewableCards(languageId: string): Promise<
+    { cardId: string; noteId: string; sliceKey: string; fsrs: string; type: string; fields: string }[]
+  > {
+    return db.select(
+      `SELECT c.id AS cardId, c.note_id AS noteId, c.slice_key AS sliceKey,
+              c.fsrs AS fsrs, n.type AS type, n.fields AS fields
+       FROM cards c
+       JOIN notes n ON n.id = c.note_id
+       WHERE n.language_id = ? AND n.paused = 0
+         AND c.deleted_at IS NULL AND n.deleted_at IS NULL`,
+      [languageId],
+    );
   }
 
   /** Apply a binary grade to a Card and persist its new FSRS state. */
@@ -148,5 +173,14 @@ export function createNotesRepository(db: SqlExecutor, now: () => number) {
     );
   }
 
-  return { createNote, updateNote, setPaused, deleteNote, liveCardSlices, gradeCard };
+  return {
+    createNote,
+    updateNote,
+    setPaused,
+    deleteNote,
+    liveCardSlices,
+    listByLanguage,
+    reviewableCards,
+    gradeCard,
+  };
 }
