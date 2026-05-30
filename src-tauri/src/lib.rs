@@ -27,6 +27,8 @@ pub fn run() {
                 .add_migrations("sqlite:lexica.db", migrations)
                 .build(),
         )
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
