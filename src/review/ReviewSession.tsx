@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getNoteType } from "../note-types";
 import { IpaHelper } from "../ipa/IpaHelper";
+import { SpeakButton } from "../tts/SpeakButton";
 import {
   createSession,
   reveal,
@@ -22,9 +23,11 @@ export interface ReviewSessionProps {
   onGrade: (cardId: string, pass: boolean) => void;
   /** Called once when the queue is exhausted. */
   onDone?: () => void;
+  /** Speak target text (TTS); omitted when no key is configured. */
+  onSpeak?: (text: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
-export function ReviewSession({ items, onGrade, onDone }: ReviewSessionProps) {
+export function ReviewSession({ items, onGrade, onDone, onSpeak }: ReviewSessionProps) {
   const [state, setState] = useState<SessionState>(() => createSession(items));
 
   const doReveal = () => setState((s) => reveal(s));
@@ -78,6 +81,9 @@ export function ReviewSession({ items, onGrade, onDone }: ReviewSessionProps) {
 
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
         <Renderer render={item.render} revealed={state.revealed} ipa={item.ipa} />
+        {state.revealed && onSpeak && item.speakText && (
+          <SpeakButton onSpeak={() => onSpeak(item.speakText!)} />
+        )}
         {state.revealed && item.ipa && <IpaHelper />}
       </div>
 

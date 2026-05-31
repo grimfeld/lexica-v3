@@ -2,9 +2,11 @@ import { useState, type ReactNode } from "react";
 import {
   listNoteTypes,
   getNoteType,
+  ipaFields,
   validateFields,
   type FieldValues,
 } from "../note-types";
+import { SpeakButton } from "../tts/SpeakButton";
 
 /*
  * The generic authoring shell. It owns type selection and save/validate; the
@@ -28,9 +30,16 @@ export interface NoteAuthoringShellProps {
     typeId: string;
     fillFields: (next: FieldValues) => void;
   }) => ReactNode;
+  /** Optional TTS preview of the in-progress card; omitted when no key. */
+  onSpeak?: (text: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
-export function NoteAuthoringShell({ onSave, initial, renderAssist }: NoteAuthoringShellProps) {
+export function NoteAuthoringShell({
+  onSave,
+  initial,
+  renderAssist,
+  onSpeak,
+}: NoteAuthoringShellProps) {
   const types = listNoteTypes();
   const [type, setType] = useState(initial?.type ?? types[0]?.id ?? "");
   const [fields, setFields] = useState<FieldValues>(initial?.fields ?? {});
@@ -63,6 +72,11 @@ export function NoteAuthoringShell({ onSave, initial, renderAssist }: NoteAuthor
 
   const Form = module?.AuthoringForm;
 
+  // Preview audio of the in-progress card's primary target-language field.
+  const speakKey = module ? ipaFields(module)[0] : undefined;
+  const speakText = speakKey ? fields[speakKey] : undefined;
+  const canSpeak = onSpeak && typeof speakText === "string" && speakText.trim() !== "";
+
   return (
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-1">
@@ -87,6 +101,13 @@ export function NoteAuthoringShell({ onSave, initial, renderAssist }: NoteAuthor
       {type && renderAssist?.({ typeId: type, fillFields })}
 
       {Form && <Form value={fields} onChange={setFields} />}
+
+      {canSpeak && (
+        <div className="flex items-center gap-2 text-sm text-[var(--color-ink-muted)]">
+          <span>Preview pronunciation</span>
+          <SpeakButton onSpeak={() => onSpeak!(speakText as string)} label="Preview pronunciation" />
+        </div>
+      )}
 
       {errors.length > 0 && (
         <ul className="text-sm text-[var(--color-miss)]">

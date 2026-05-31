@@ -15,6 +15,13 @@
       "when": 1780217132353,
       "tag": "0001_careless_sir_ram",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1780218178206,
+      "tag": "0002_blue_night_nurse",
+      "breakpoints": true
     }
   ]
 }

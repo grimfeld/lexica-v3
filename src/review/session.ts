@@ -13,6 +13,8 @@ export interface ReviewItem {
   render: unknown;
   /** IPA aid for this card's target text, if available (display-only). */
   ipa: string | null;
+  /** Target-language text to speak (TTS), if the note has a speakable field. */
+  speakText?: string | null;
 }
 
 export interface SessionState {

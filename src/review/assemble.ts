@@ -1,4 +1,4 @@
-import { getNoteType, type FieldValues } from "../note-types";
+import { getNoteType, ipaFields, type FieldValues } from "../note-types";
 import type { ReviewItem } from "./session";
 
 /*
@@ -30,9 +30,14 @@ export function assembleReviewItems(
   for (const due of dueCards) {
     const note = notes.get(due.noteId);
     if (!note) continue;
-    const derived = getNoteType(note.type).deriveCards(note.fields);
+    const type = getNoteType(note.type);
+    const derived = type.deriveCards(note.fields);
     const match = derived.find((d) => d.sliceKey === due.sliceKey);
     if (!match) continue; // slice no longer exists; skip
+
+    // Speakable text = the note's primary IPA-bearing field (target language).
+    const speakKey = ipaFields(type)[0];
+    const speakVal = speakKey ? note.fields[speakKey] : undefined;
 
     items.push({
       cardId: due.cardId,
@@ -40,6 +45,7 @@ export function assembleReviewItems(
       typeId: note.type,
       render: match.render,
       ipa: due.ipa,
+      speakText: typeof speakVal === "string" && speakVal ? speakVal : null,
     });
   }
 

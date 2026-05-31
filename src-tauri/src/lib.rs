@@ -29,6 +29,12 @@ pub fn run() {
             sql: include_str!("../migrations/0001_careless_sir_ram.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "tts cache table",
+            sql: include_str!("../migrations/0002_blue_night_nurse.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

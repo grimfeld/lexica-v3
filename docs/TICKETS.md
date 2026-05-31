@@ -161,8 +161,11 @@ Depends on: T14, T4
 Depends on: T14, T4
 
 ### T18 — TTS + local cache [ADR-0008]
-- [ ] ElevenLabs; app-fixed voice per Language; key = hash(text + language)
-- [ ] Local cache; warn re higher per-device cost
+- [x] ElevenLabs; app-fixed voice per Language; key = hash(text + language)
+      (voices config map; djb2 hash over normalized text; BYOK client-direct)
+- [x] Local cache; warn re higher per-device cost (tts_cache table base64,
+      migration v3; cache-first speak; per-device cost note in settings)
+- [x] Play in review (on reveal) + authoring preview (in the shell)
 Depends on: T14, T17
 
 **Ships: full AI on BYOK, fully local-capable.**

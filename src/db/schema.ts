@@ -90,3 +90,17 @@ export const pronunciations = sqliteTable(
   },
   (t) => [index("pronunciations_note_idx").on(t.noteId)],
 );
+
+/**
+ * Local TTS audio cache (ADR-0008). Keyed by hash(normalizedText + language) —
+ * voice/model are app-fixed per Language, so they don't enter the key. This is a
+ * device-local artifact, NOT synced data, so it deliberately carries no sync
+ * columns: the shared/global cache is a separate PocketBase store (T22). Audio
+ * is stored base64-encoded with its mime type.
+ */
+export const ttsCache = sqliteTable("tts_cache", {
+  keyhash: text("keyhash").primaryKey(),
+  audioB64: text("audio_b64").notNull(),
+  mime: text("mime").notNull(),
+  createdAt: integer("created_at").notNull(),
+});

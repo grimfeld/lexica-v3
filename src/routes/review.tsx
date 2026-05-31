@@ -8,6 +8,7 @@ import { assembleReviewItems, type DueCard, type NoteSource } from "../review/as
 import { dueCardsForDeck } from "../decks/deck-session";
 import { ReviewSession } from "../review/ReviewSession";
 import { getNoteType, ipaFields } from "../note-types";
+import { speak, ttsAvailable } from "../tts/run";
 
 export const Route = createFileRoute("/review")({
   validateSearch: (s: Record<string, unknown>): { deck?: string } => ({
@@ -20,6 +21,11 @@ function ReviewPage() {
   const qc = useQueryClient();
   const activeId = useActiveLanguage((s) => s.activeId);
   const { deck } = Route.useSearch();
+
+  const { data: ttsOn } = useQuery({
+    queryKey: ["tts-available"],
+    queryFn: () => ttsAvailable(),
+  });
 
   const { data, refetch } = useQuery({
     queryKey: ["review", activeId, deck],
@@ -86,6 +92,7 @@ function ReviewPage() {
         void qc.invalidateQueries({ queryKey: ["review", activeId, deck] });
         void refetch();
       }}
+      onSpeak={ttsOn ? (text) => speak(activeId!, text) : undefined}
     />
   );
 }
