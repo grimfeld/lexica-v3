@@ -137,8 +137,10 @@ AI bound by type schemas; invalid output rejected/retried [Q20, ADR-0007].
 Depends on: T1
 
 ### T15 — Authoring assist [ADR-0007]
-- [ ] User picks type + seed; AI fills fields; validated vs schema; retry on invalid
-- [ ] Nothing saved without user confirm
+- [x] User picks type + seed; AI fills fields; validated vs schema; retry on invalid
+      (BYOK chat client, client-direct; bounded retry on malformed/invalid JSON)
+- [x] Nothing saved without user confirm (assist only populates the form;
+      existing Save path validates + persists; panel hidden without a chat key)
 Depends on: T14, T4
 
 ### T16 — Text extraction [ADR-0007]

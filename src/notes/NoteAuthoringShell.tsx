@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   listNoteTypes,
   getNoteType,
@@ -11,6 +11,11 @@ import {
  * type-specific fields are delegated to the chosen type's AuthoringForm
  * (ADR-0003). Persistence is injected via `onSave` so the shell stays testable
  * and decoupled from the repository/DB.
+ *
+ * `renderAssist` optionally injects the AI authoring-assist panel (ADR-0007).
+ * It receives the active type id and a setter that merges proposed fields into
+ * the form; the shell stays decoupled from the AI layer, and assist only
+ * populates form state — the user still confirms with Save.
  */
 
 export interface NoteAuthoringShellProps {
@@ -18,9 +23,14 @@ export interface NoteAuthoringShellProps {
   onSave: (note: { type: string; fields: FieldValues }) => Promise<void>;
   /** Editing an existing note: preset type + values (type picker locked). */
   initial?: { type: string; fields: FieldValues };
+  /** Optional AI assist panel; given the active type + a field-merge callback. */
+  renderAssist?: (ctx: {
+    typeId: string;
+    fillFields: (next: FieldValues) => void;
+  }) => ReactNode;
 }
 
-export function NoteAuthoringShell({ onSave, initial }: NoteAuthoringShellProps) {
+export function NoteAuthoringShell({ onSave, initial, renderAssist }: NoteAuthoringShellProps) {
   const types = listNoteTypes();
   const [type, setType] = useState(initial?.type ?? types[0]?.id ?? "");
   const [fields, setFields] = useState<FieldValues>(initial?.fields ?? {});
@@ -46,6 +56,11 @@ export function NoteAuthoringShell({ onSave, initial }: NoteAuthoringShellProps)
     }
   }
 
+  // Assist merges proposed values over what's there; the user edits before save.
+  function fillFields(next: FieldValues) {
+    setFields((prev) => ({ ...prev, ...next }));
+  }
+
   const Form = module?.AuthoringForm;
 
   return (
@@ -68,6 +83,8 @@ export function NoteAuthoringShell({ onSave, initial }: NoteAuthoringShellProps)
           ))}
         </select>
       </label>
+
+      {type && renderAssist?.({ typeId: type, fillFields })}
 
       {Form && <Form value={fields} onChange={setFields} />}
 

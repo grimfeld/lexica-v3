@@ -4,6 +4,8 @@ import { useActiveLanguage } from "../languages/activeLanguage";
 import { NoteAuthoringShell } from "../notes/NoteAuthoringShell";
 import { services } from "../services";
 import { getNoteType, type FieldValues } from "../note-types";
+import { AuthoringAssist } from "../ai/AuthoringAssist";
+import { runAssist, chatProviderLabel } from "../ai";
 
 export const Route = createFileRoute("/notes")({
   component: NotesPage,
@@ -24,6 +26,12 @@ function NotesPage() {
     queryKey: ["notes", activeId],
     queryFn: () => services.notes.listByLanguage(activeId!),
     enabled: !!activeId,
+  });
+
+  // Show the AI assist panel only when a chat-capable key is configured.
+  const { data: assistLabel } = useQuery({
+    queryKey: ["byok-chat-label"],
+    queryFn: () => chatProviderLabel(),
   });
 
   if (!activeId) {
@@ -54,7 +62,20 @@ function NotesPage() {
     <div className="flex flex-col gap-8">
       <section>
         <h2 className="mb-3 text-xl">Add a note</h2>
-        <NoteAuthoringShell onSave={createNote} />
+        <NoteAuthoringShell
+          onSave={createNote}
+          renderAssist={
+            assistLabel
+              ? ({ typeId, fillFields }) => (
+                  <AuthoringAssist
+                    providerLabel={assistLabel}
+                    onAssist={(seed) => runAssist(typeId, seed)}
+                    onFill={fillFields}
+                  />
+                )
+              : undefined
+          }
+        />
       </section>
 
       <section>
