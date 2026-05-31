@@ -41,6 +41,16 @@ function SettingsPage() {
       </section>
 
       <section className="flex flex-col gap-2">
+        <h2 className="text-xl">Pronunciation audio</h2>
+        <p className="text-sm text-[var(--color-ink-muted)]">
+          With an ElevenLabs key, cards can be spoken aloud. Audio is generated
+          once and cached on this device. The cache is local, so each device you
+          use will regenerate (and re-pay for) the same clips — a shared cache
+          across devices comes with cloud sync later.
+        </p>
+      </section>
+
+      <section className="flex flex-col gap-2">
         <h2 className="text-xl">Backup</h2>
         <p className="text-sm text-[var(--color-ink-muted)]">
           Export your data to a file and keep it on any drive, or import a backup.

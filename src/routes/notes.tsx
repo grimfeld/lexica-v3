@@ -10,6 +10,7 @@ import { runAssist, runExtract, chatProviderLabel } from "../ai";
 import { readDocFile } from "../ai/doc-read";
 import type { Candidate } from "../ai/extract";
 import { enqueueNoteIpa, backfillIpa } from "../ipa/run";
+import { speak, ttsAvailable } from "../tts/run";
 
 export const Route = createFileRoute("/notes")({
   component: NotesPage,
@@ -36,6 +37,10 @@ function NotesPage() {
   const { data: assistLabel } = useQuery({
     queryKey: ["byok-chat-label"],
     queryFn: () => chatProviderLabel(),
+  });
+  const { data: ttsOn } = useQuery({
+    queryKey: ["tts-available"],
+    queryFn: () => ttsAvailable(),
   });
 
   if (!activeId) {
@@ -100,6 +105,7 @@ function NotesPage() {
                 )
               : undefined
           }
+          onSpeak={ttsOn ? (text) => speak(activeId!, text) : undefined}
         />
       </section>
 
