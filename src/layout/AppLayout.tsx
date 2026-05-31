@@ -5,6 +5,7 @@ import { useIsMobile } from "./useIsMobile";
 import { NAV_ITEMS } from "./nav";
 import { LanguageBar } from "./LanguageBar";
 import { backfillIpa } from "../ipa/run";
+import { startReminderLoop } from "../reminder/run";
 
 /*
  * The app shell. Two layouts over one core (ADR-0011): desktop = sidebar
@@ -17,7 +18,10 @@ export function AppLayout() {
   // Drain any pending/failed IPA once on app load (ADR-0002 backfill). Guarded
   // to the native app — the live DB isn't available in plain browser dev.
   useEffect(() => {
-    if (isTauri()) void backfillIpa();
+    if (isTauri()) {
+      void backfillIpa();
+      startReminderLoop();
+    }
   }, []);
   return isMobile ? <MobileLayout /> : <DesktopLayout />;
 }

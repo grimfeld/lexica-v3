@@ -229,7 +229,9 @@ Depends on: T20, T15–T18
 Depends on: T18, T19
 
 ### T23 — Daily reminder [ADR-0005]
-- [ ] Off by default; user-set hour; unconditional habit cue; no count/escalation
+- [x] Off by default; user-set hour; unconditional habit cue; no count/escalation
+      (pure once-per-day schedule rule; notification plugin; fixed "Time to
+      practice?" message — the module never reads the due count by design)
 Depends on: T6
 
 **Ships: cloud sync, paywalled AI, global cache, reminders — full MVP.**

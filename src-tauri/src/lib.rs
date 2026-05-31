@@ -62,6 +62,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
         // BYOK keys live in an OS-encrypted Stronghold vault, never in the
         // synced SQLite or the backup bundle (ADR-0006/0010). The vault is
         // unlocked from JS with an app-derived password; argon2 stretches it.
