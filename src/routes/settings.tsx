@@ -6,6 +6,8 @@ import { ByokSettings } from "../ai/ByokSettings";
 import { keyStore, PROVIDERS, getProvider } from "../ai";
 import { CloudSettings } from "../sync/CloudSettings";
 import { configureCloud, auth, syncNow, currentUrl, signedInEmail } from "../sync/run";
+import { SubscriptionSettings } from "../billing/SubscriptionSettings";
+import { subscription } from "../billing/run";
 import { services } from "../services";
 import { useState } from "react";
 
@@ -22,6 +24,12 @@ function SettingsPage() {
   const { data: keyedIds = [] } = useQuery({
     queryKey: ["byok-keys"],
     queryFn: () => keyStore.providersWithKeys(),
+  });
+
+  // null when signed out (prompts sign-in); boolean entitlement otherwise.
+  const { data: subActive = null } = useQuery({
+    queryKey: ["subscription-active", signedInEmail()],
+    queryFn: async () => (signedInEmail() ? subscription.isActive() : null),
   });
 
   return (
@@ -81,6 +89,14 @@ function SettingsPage() {
             const r = await syncNow();
             await qc.invalidateQueries();
             return { ok: r.ok, error: r.error };
+          }}
+        />
+        <SubscriptionSettings
+          active={subActive}
+          onSubscribe={async () => {
+            const ok = await subscription.subscribe();
+            await qc.invalidateQueries({ queryKey: ["subscription-active"] });
+            return ok;
           }}
         />
       </section>

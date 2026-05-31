@@ -189,9 +189,18 @@ Depends on: T14, T17
 Depends on: T13
 
 ### T20 — Stripe + subscription status [ADR-0006]
-- [ ] Checkout for cloud + app-key paywall
-- [ ] Webhook updates `subscriptionActive` in PocketBase
-- [ ] Login issues short-lived JWT (~15 min) with `active` claim
+- [x] Checkout for cloud + app-key paywall (client subscription module +
+      Subscribe button; opens Stripe Checkout via opener plugin)
+- [x] Webhook updates `subscriptionActive` in PocketBase (pure event->flag
+      mapper + host-agnostic handler; bad signature rejected, unrelated events
+      no-op)
+- [x] Login issues short-lived JWT (~15 min) with `active` claim (HS256 over
+      Web Crypto; sign + verify shared with the T21 Worker; TDD'd incl.
+      tamper/expiry/wrong-secret)
+- Pure logic (event-map, jwt, handlers, subscription) fully TDD'd. Live Stripe +
+  PocketBase endpoints (/api/billing/checkout, /token, webhook host) are wired
+  to stubs returning null until T21 picks the host — needs Stripe keys +
+  webhook secret + a deployed endpoint to verify end-to-end.
 Depends on: T19
 
 ### T21 — Cloudflare Worker AI proxy [ADR-0006]

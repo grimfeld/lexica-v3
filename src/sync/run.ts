@@ -43,6 +43,11 @@ export function cloudConfigured(): boolean {
   return pb !== null;
 }
 
+/** The shared PocketBase instance (or null) — for billing/run to read the user. */
+export function pbInstance(): PocketBase | null {
+  return pb;
+}
+
 export function currentUrl(): string | null {
   return configuredUrl;
 }
