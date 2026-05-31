@@ -216,9 +216,16 @@ Depends on: T19
 Depends on: T20, T15–T18
 
 ### T22 — Global TTS cache [ADR-0008]
-- [ ] Opt into global cache (even as local-card user); free
-- [ ] Ownerless entries: keyhash → audio, no user attached
-- [ ] Miss → generate + populate
+- [x] Opt into global cache (even as local-card user); free (localStorage toggle,
+      independent of card Storage Mode; needs a configured PocketBase, not cloud
+      card storage)
+- [x] Ownerless entries: keyhash → audio, no user attached (`tts_global`
+      collection: keyhash/audio_b64/mime, no user field)
+- [x] Miss → generate + populate (speak tiers local → global → synth; a synth
+      result populates both local + global; a global hit seeds local)
+- Tier precedence + populate-both is pure + TDD'd in speak.ts. The live
+  PocketBase global cache needs the collection created + a configured server to
+  verify end-to-end.
 Depends on: T18, T19
 
 ### T23 — Daily reminder [ADR-0005]

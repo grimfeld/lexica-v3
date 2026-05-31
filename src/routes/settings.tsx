@@ -9,6 +9,7 @@ import { configureCloud, auth, syncNow, currentUrl, signedInEmail } from "../syn
 import { SubscriptionSettings } from "../billing/SubscriptionSettings";
 import { subscription } from "../billing/run";
 import { getWorkerUrl, setWorkerUrl } from "../ai/config";
+import { globalTtsEnabled, setGlobalTtsEnabled } from "../tts/config";
 import { services } from "../services";
 import { useState } from "react";
 
@@ -118,10 +119,26 @@ function SettingsPage() {
         <h2 className="text-xl">Pronunciation audio</h2>
         <p className="text-sm text-[var(--color-ink-muted)]">
           With an ElevenLabs key, cards can be spoken aloud. Audio is generated
-          once and cached on this device. The cache is local, so each device you
-          use will regenerate (and re-pay for) the same clips — a shared cache
-          across devices comes with cloud sync later.
+          once and cached on this device. The local cache is private, so each
+          device regenerates (and re-pays for) the same clips unless you opt into
+          the shared cache below.
         </p>
+
+        <label className="mt-1 flex items-start gap-2">
+          <input
+            type="checkbox"
+            aria-label="Use the shared pronunciation cache"
+            defaultChecked={globalTtsEnabled()}
+            onChange={(e) => setGlobalTtsEnabled(e.target.checked)}
+            className="mt-1"
+          />
+          <span className="text-sm text-[var(--color-ink-muted)]">
+            Use the shared pronunciation cache. Free, and works even fully local.
+            Clips are stored by content only, with no account attached, so the
+            shared pool can't tell who voiced what — and it lowers cost for
+            everyone. (Requires a configured cloud server above.)
+          </span>
+        </label>
       </section>
 
       <section className="flex flex-col gap-2">

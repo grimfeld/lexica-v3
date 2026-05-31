@@ -2,6 +2,8 @@ import { services } from "../services";
 import { keyStore } from "../ai";
 import { elevenLabsClient } from "./client";
 import { resolveSpeech, type SpeakResult } from "./speak";
+import { globalTtsEnabled } from "./config";
+import { pbGlobalCache } from "./global-cache-pb";
 
 /*
  * Live TTS wiring (ADR-0008): resolve audio cache-first (local cache + BYOK
@@ -24,12 +26,14 @@ function play(audioB64: string, mime: string): void {
   void audio.play();
 }
 
-/** Speak target-language text: cache-first, synth on miss, then play. */
+/** Speak target-language text: cache-first (local -> global -> synth), then play. */
 export async function speak(languageId: string, text: string): Promise<SpeakResult> {
   const client = await ttsClient();
   const result = await resolveSpeech(languageId, text, {
     cache: services.ttsCache,
     client,
+    // Opt-in, ownerless shared pool (ADR-0008); null when not enabled.
+    global: globalTtsEnabled() ? pbGlobalCache : null,
   });
   if (result.ok && result.audio) play(result.audio.audioB64, result.audio.mime);
   return result;
