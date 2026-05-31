@@ -10,6 +10,9 @@ import { SubscriptionSettings } from "../billing/SubscriptionSettings";
 import { subscription } from "../billing/run";
 import { getWorkerUrl, setWorkerUrl } from "../ai/config";
 import { globalTtsEnabled, setGlobalTtsEnabled } from "../tts/config";
+import { ReminderSettings } from "../reminder/ReminderSettings";
+import { getReminderConfig, updateReminderConfig } from "../reminder/config";
+import { requestReminderPermission } from "../reminder/run";
 import { services } from "../services";
 import { useState } from "react";
 
@@ -22,6 +25,8 @@ function SettingsPage() {
   // Cloud state is module-held in sync/run; bump to re-read after each action.
   const [, bump] = useState(0);
   const refresh = () => bump((n) => n + 1);
+
+  const [reminder, setReminder] = useState(getReminderConfig);
 
   const { data: keyedIds = [] } = useQuery({
     queryKey: ["byok-keys"],
@@ -139,6 +144,15 @@ function SettingsPage() {
             everyone. (Requires a configured cloud server above.)
           </span>
         </label>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xl">Reminder</h2>
+        <ReminderSettings
+          config={reminder}
+          onChange={(patch) => setReminder(updateReminderConfig(patch))}
+          onEnable={requestReminderPermission}
+        />
       </section>
 
       <section className="flex flex-col gap-2">

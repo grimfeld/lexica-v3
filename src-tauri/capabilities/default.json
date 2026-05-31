@@ -15,6 +15,7 @@
     "dialog:default",
     "fs:default",
     "stronghold:default",
-    "opener:default"
+    "opener:default",
+    "notification:default"
   ]
 }
