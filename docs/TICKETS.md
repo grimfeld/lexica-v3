@@ -131,7 +131,9 @@ Depends on: T4
 AI bound by type schemas; invalid output rejected/retried [Q20, ADR-0007].
 
 ### T14 — BYOK plumbing [ADR-0006]
-- [ ] Enter/clear key in settings; key only ever goes client → provider
+- [x] Enter/clear key in settings; key only ever goes client → provider
+      (Stronghold-encrypted vault, never synced / never in backup; per-provider
+      key store + test-connection; in-memory fallback in browser dev)
 Depends on: T1
 
 ### T15 — Authoring assist [ADR-0007]
