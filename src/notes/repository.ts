@@ -158,6 +158,15 @@ export function createNotesRepository(db: SqlExecutor, now: () => number) {
     );
   }
 
+  /** The language a note belongs to, or null if it's gone — for IPA backfill. */
+  async function noteLanguage(noteId: string): Promise<string | null> {
+    const rows = await db.select<{ languageId: string }>(
+      `SELECT language_id AS languageId FROM notes WHERE id = ? AND deleted_at IS NULL`,
+      [noteId],
+    );
+    return rows[0]?.languageId ?? null;
+  }
+
   /** Apply a binary grade to a Card and persist its new FSRS state. */
   async function gradeCard(cardId: string, pass: boolean): Promise<void> {
     const rows = await db.select<FsrsRow>(
@@ -182,5 +191,6 @@ export function createNotesRepository(db: SqlExecutor, now: () => number) {
     listByLanguage,
     reviewableCards,
     gradeCard,
+    noteLanguage,
   };
 }

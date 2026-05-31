@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getNoteType } from "../note-types";
+import { IpaHelper } from "../ipa/IpaHelper";
 import {
   createSession,
   reveal,
@@ -75,8 +76,9 @@ export function ReviewSession({ items, onGrade, onDone }: ReviewSessionProps) {
         />
       </div>
 
-      <div className="flex flex-1 items-center justify-center p-8">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
         <Renderer render={item.render} revealed={state.revealed} ipa={item.ipa} />
+        {state.revealed && item.ipa && <IpaHelper />}
       </div>
 
       <div className="flex justify-center gap-3 p-6">

@@ -9,6 +9,7 @@ import { ExtractDialog } from "../ai/ExtractDialog";
 import { runAssist, runExtract, chatProviderLabel } from "../ai";
 import { readDocFile } from "../ai/doc-read";
 import type { Candidate } from "../ai/extract";
+import { enqueueNoteIpa, backfillIpa } from "../ipa/run";
 
 export const Route = createFileRoute("/notes")({
   component: NotesPage,
@@ -42,27 +43,34 @@ function NotesPage() {
   }
 
   async function createNote(note: { type: string; fields: FieldValues }) {
+    const id = crypto.randomUUID();
     await services.notes.createNote({
-      id: crypto.randomUUID(),
+      id,
       languageId: activeId!,
       type: note.type,
       fields: note.fields,
     });
     await qc.invalidateQueries({ queryKey: ["notes", activeId] });
+    // Queue + backfill pronunciation in the background; authoring doesn't wait.
+    await enqueueNoteIpa(id, note.type, note.fields);
+    void backfillIpa();
   }
 
   async function acceptCandidates(accepted: Candidate[]) {
     // Each candidate is already type-shaped + validated by the extractor; this
     // only persists the ones the user explicitly selected.
     for (const c of accepted) {
+      const id = crypto.randomUUID();
       await services.notes.createNote({
-        id: crypto.randomUUID(),
+        id,
         languageId: activeId!,
         type: c.type,
         fields: c.fields,
       });
+      await enqueueNoteIpa(id, c.type, c.fields);
     }
     await qc.invalidateQueries({ queryKey: ["notes", activeId] });
+    void backfillIpa();
   }
 
   async function remove(id: string) {
