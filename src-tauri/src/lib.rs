@@ -1,4 +1,16 @@
+use std::path::PathBuf;
 use tauri_plugin_sql::{Migration, MigrationKind};
+
+/// Salt file backing the Stronghold argon2 password hash. Kept beside the app's
+/// data so the encrypted vault is reproducible across launches on this device.
+/// The salt is created by the plugin on first run if absent.
+fn stronghold_salt_path() -> PathBuf {
+    let mut dir = dirs_next::data_dir().unwrap_or_else(|| PathBuf::from("."));
+    dir.push("lexica");
+    std::fs::create_dir_all(&dir).ok();
+    dir.push("stronghold.salt");
+    dir
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -29,6 +41,10 @@ pub fn run() {
         )
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        // BYOK keys live in an OS-encrypted Stronghold vault, never in the
+        // synced SQLite or the backup bundle (ADR-0006/0010). The vault is
+        // unlocked from JS with an app-derived password; argon2 stretches it.
+        .plugin(tauri_plugin_stronghold::Builder::with_argon2(&stronghold_salt_path()).build())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
