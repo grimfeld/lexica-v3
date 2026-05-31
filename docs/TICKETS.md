@@ -204,8 +204,15 @@ Depends on: T13
 Depends on: T19
 
 ### T21 — Cloudflare Worker AI proxy [ADR-0006]
-- [ ] Worker verifies JWT `active`, proxies to providers; app keys server-side only
-- [ ] App-key AI path available in any Storage Mode for subscribers
+- [x] Worker verifies JWT `active`, proxies to providers; app keys server-side only
+      (worker/ project; gate = bearer + verifyToken + active claim; keys in
+      Worker secrets, never shipped; chat/tts/billing routes)
+- [x] App-key AI path available in any Storage Mode for subscribers (client
+      transport picks BYOK-direct when a key exists, else app-key via Worker for
+      active subscribers; proxyChatClient satisfies the same ChatClient iface)
+- Gate, transport selection, and proxy contract are pure + TDD'd in src/ai.
+  The Worker (worker/) is thin deploy glue reusing the shared, tested logic;
+  it's NOT deployed — needs a Cloudflare account + secrets + live PB/Stripe.
 Depends on: T20, T15–T18
 
 ### T22 — Global TTS cache [ADR-0008]
