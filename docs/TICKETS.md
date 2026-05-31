@@ -144,9 +144,12 @@ Depends on: T1
 Depends on: T14, T4
 
 ### T16 — Text extraction [ADR-0007]
-- [ ] Import PDF/txt → AI extracts candidates (AI picks type)
-- [ ] Candidates default UNSELECTED; user opts in per card
-- [ ] Accepted → valid type-shaped Notes created
+- [x] Import txt/md OR paste text → AI extracts candidates (AI picks type)
+      (PDF parsing deferred; paste covers "copied from a PDF / web page")
+- [x] Candidates default UNSELECTED; user opts in per card (selection starts
+      empty; only checked candidates are accepted — enforced by test)
+- [x] Accepted → valid type-shaped Notes created (each candidate type-bound +
+      validateFields'd in the extractor before it can be offered)
 Depends on: T14, T4
 
 ### T17 — Pronunciation pipeline [ADR-0002]

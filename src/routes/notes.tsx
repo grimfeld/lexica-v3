@@ -5,7 +5,10 @@ import { NoteAuthoringShell } from "../notes/NoteAuthoringShell";
 import { services } from "../services";
 import { getNoteType, type FieldValues } from "../note-types";
 import { AuthoringAssist } from "../ai/AuthoringAssist";
-import { runAssist, chatProviderLabel } from "../ai";
+import { ExtractDialog } from "../ai/ExtractDialog";
+import { runAssist, runExtract, chatProviderLabel } from "../ai";
+import { readDocFile } from "../ai/doc-read";
+import type { Candidate } from "../ai/extract";
 
 export const Route = createFileRoute("/notes")({
   component: NotesPage,
@@ -48,6 +51,20 @@ function NotesPage() {
     await qc.invalidateQueries({ queryKey: ["notes", activeId] });
   }
 
+  async function acceptCandidates(accepted: Candidate[]) {
+    // Each candidate is already type-shaped + validated by the extractor; this
+    // only persists the ones the user explicitly selected.
+    for (const c of accepted) {
+      await services.notes.createNote({
+        id: crypto.randomUUID(),
+        languageId: activeId!,
+        type: c.type,
+        fields: c.fields,
+      });
+    }
+    await qc.invalidateQueries({ queryKey: ["notes", activeId] });
+  }
+
   async function remove(id: string) {
     await services.notes.deleteNote(id);
     await qc.invalidateQueries({ queryKey: ["notes", activeId] });
@@ -77,6 +94,18 @@ function NotesPage() {
           }
         />
       </section>
+
+      {assistLabel && (
+        <section>
+          <h2 className="mb-3 text-xl">Extract from a document</h2>
+          <ExtractDialog
+            providerLabel={assistLabel}
+            onExtract={runExtract}
+            onPickFile={readDocFile}
+            onAccept={acceptCandidates}
+          />
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-xl">Notes</h2>
