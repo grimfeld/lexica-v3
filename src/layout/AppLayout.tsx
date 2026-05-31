@@ -1,7 +1,10 @@
+import { useEffect } from "react";
+import { isTauri } from "@tauri-apps/api/core";
 import { Link, Outlet } from "@tanstack/react-router";
 import { useIsMobile } from "./useIsMobile";
 import { NAV_ITEMS } from "./nav";
 import { LanguageBar } from "./LanguageBar";
+import { backfillIpa } from "../ipa/run";
 
 /*
  * The app shell. Two layouts over one core (ADR-0011): desktop = sidebar
@@ -11,6 +14,11 @@ import { LanguageBar } from "./LanguageBar";
 
 export function AppLayout() {
   const isMobile = useIsMobile();
+  // Drain any pending/failed IPA once on app load (ADR-0002 backfill). Guarded
+  // to the native app — the live DB isn't available in plain browser dev.
+  useEffect(() => {
+    if (isTauri()) void backfillIpa();
+  }, []);
   return isMobile ? <MobileLayout /> : <DesktopLayout />;
 }
 

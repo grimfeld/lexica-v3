@@ -67,3 +67,26 @@ export const deckNotes = sqliteTable(
   },
   (t) => [index("deck_notes_deck_idx").on(t.deckId)],
 );
+
+/**
+ * App-generated Pronunciation (ADR-0002): IPA for a Note's IPA-bearing field,
+ * keyed by (noteId, fieldKey). Display-only, never tested, NULLABLE — note
+ * creation never blocks on it; a background job backfills it (ADR-0002 / T17).
+ * `status` drives the retry queue: pending = not yet attempted, done = filled
+ * (ipa may still be null if genuinely unavailable), failed = last attempt errored.
+ */
+export const pronunciations = sqliteTable(
+  "pronunciations",
+  {
+    // Composite identity flattened into a single key: `${noteId}:${fieldKey}`.
+    id: text("id").primaryKey(),
+    noteId: text("note_id").notNull(),
+    fieldKey: text("field_key").notNull(),
+    // The source text the IPA was generated for — lets us detect staleness on edit.
+    sourceText: text("source_text").notNull(),
+    ipa: text("ipa"),
+    status: text("status").notNull().default("pending"),
+    ...syncColumns,
+  },
+  (t) => [index("pronunciations_note_idx").on(t.noteId)],
+);

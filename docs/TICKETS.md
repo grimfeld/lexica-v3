@@ -153,8 +153,11 @@ Depends on: T14, T4
 Depends on: T14, T4
 
 ### T17 — Pronunciation pipeline [ADR-0002]
-- [ ] Dict lookup → LLM fallback; nullable IPA; async backfill (retry queue)
-- [ ] IPA display-only on reveal; never tested; IPA reading helper
+- [x] Dict lookup → LLM fallback; nullable IPA; async backfill (retry queue)
+      (tiny seed dict + BYOK LLM fallback; pronunciations table, status-driven
+      queue; backfill runs after note save + on app load; failures retried)
+- [x] IPA display-only on reveal; never tested; IPA reading helper
+      (stored IPA threaded to review renderers on reveal; collapsible IPA guide)
 Depends on: T14, T4
 
 ### T18 — TTS + local cache [ADR-0008]

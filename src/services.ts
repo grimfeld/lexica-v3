@@ -4,6 +4,7 @@ import { createDecksRepository } from "./decks/repository";
 import { createLanguagesRepository } from "./languages/repository";
 import { createStatsQuery } from "./stats/query";
 import { createBackup } from "./backup/backup";
+import { createPronunciationsRepository } from "./ipa/repository";
 
 /*
  * The single composition root: every repository bound to the live Tauri SQL
@@ -21,6 +22,7 @@ export const services = {
   languages: createLanguagesRepository(tauriExecutor, now),
   stats: createStatsQuery(tauriExecutor),
   backup: createBackup(tauriExecutor, now),
+  pronunciations: createPronunciationsRepository(tauriExecutor, now),
 };
 
 export type Services = typeof services;

@@ -7,6 +7,7 @@ import { buildSessionQueue } from "../scheduling/queue";
 import { assembleReviewItems, type DueCard, type NoteSource } from "../review/assemble";
 import { dueCardsForDeck } from "../decks/deck-session";
 import { ReviewSession } from "../review/ReviewSession";
+import { getNoteType, ipaFields } from "../note-types";
 
 export const Route = createFileRoute("/review")({
   validateSearch: (s: Record<string, unknown>): { deck?: string } => ({
@@ -42,6 +43,19 @@ function ReviewPage() {
         const deckNoteIds = await services.decks.noteIdsInDeck(deck);
         due = dueCardsForDeck(due, deckNoteIds);
       }
+
+      // Attach stored IPA (display-only, ADR-0002) for each card's note. A card
+      // shows the pronunciation of its note's primary IPA-bearing field.
+      const ipaByNote = new Map<string, string | null>();
+      await Promise.all(
+        [...notes.values()].map(async (n) => {
+          const primary = ipaFields(getNoteType(n.type))[0];
+          if (!primary) return;
+          const map = await services.pronunciations.getForNote(n.id);
+          ipaByNote.set(n.id, map[primary] ?? null);
+        }),
+      );
+      for (const d of due) d.ipa = ipaByNote.get(d.noteId) ?? null;
 
       const ordered = buildSessionQueue(
         due.map((d) => ({ id: d.cardId, noteId: d.noteId, due: now })),
