@@ -22,9 +22,14 @@ export type { ProviderInfo } from "./providers";
 // ---- Authoring assist (T15) ----------------------------------------------
 
 import { getProvider } from "./providers";
-import { getNoteType } from "../note-types";
+import { getNoteType, listNoteTypes } from "../note-types";
 import { chatClientFor, CHAT_PROVIDERS } from "./chat";
 import { assistFields, type AssistResult } from "./authoring-assist";
+import {
+  extractCandidates,
+  type ExtractResult,
+  type ExtractableType,
+} from "./extract";
 
 /**
  * The first chat-capable provider the user has a key for, or null. Used to
@@ -56,4 +61,25 @@ export async function runAssist(typeId: string, seed: string): Promise<AssistRes
   if (!client) return { ok: false, error: "This provider can't draft fields." };
   const type = getNoteType(typeId);
   return assistFields(client, type.name, type.fields, seed);
+}
+
+/**
+ * Live text-extraction runner: resolve the active chat provider's key, build a
+ * client, and extract candidate Notes from a document across all registered
+ * types. Each candidate is type-bound and validated inside extractCandidates;
+ * nothing is created here (ADR-0007 — candidates default unselected).
+ */
+export async function runExtract(doc: string): Promise<ExtractResult> {
+  const providerId = await activeChatProvider();
+  if (!providerId) return { ok: false, error: "Add an AI key in Settings first." };
+  const key = await keyStore.getKey(providerId);
+  if (!key) return { ok: false, error: "Add an AI key in Settings first." };
+  const client = chatClientFor(providerId, key);
+  if (!client) return { ok: false, error: "This provider can't extract cards." };
+  const types: ExtractableType[] = listNoteTypes().map((t) => ({
+    id: t.id,
+    name: t.name,
+    fields: t.fields,
+  }));
+  return extractCandidates(client, types, doc);
 }
