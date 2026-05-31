@@ -175,10 +175,17 @@ Depends on: T14, T17
 ## Milestone 3 — Cloud (PocketBase + Workers + Stripe)
 
 ### T19 — PocketBase storage + auth + sync [ADR-0006, 0010]
-- [ ] Optional sign up/in (local users skip)
-- [ ] Cloud Storage Mode syncs Notes/Cards/FSRS state
-- [ ] Hand-rolled LWW reconciler (isolated, swappable); last-review-wins for FSRS
-- [ ] Conflict policy per ADR-0010
+- [x] Optional sign up/in (local users skip) — PocketBase auth behind AuthApi;
+      Cloud section in settings, entirely opt-in
+- [x] Cloud Storage Mode syncs Notes/Cards/FSRS state (+ languages, decks,
+      deck_notes, pronunciations); tts_cache/sync_state stay device-local
+- [x] Hand-rolled LWW reconciler (isolated in src/sync/reconcile.ts, swappable);
+      last-review-wins for FSRS via the card's `last_review`
+- [x] Conflict policy per ADR-0010 (LWW by updated_at for content, tombstones,
+      per-device watermark; ties favour the shared copy)
+- Reconciler + engine + local store are pure and fully TDD'd (the data-loss
+  landmine). Live PocketBase path needs a running instance + collections to
+  verify end-to-end (rid/updated_at/deleted_at/data fields, users auth).
 Depends on: T13
 
 ### T20 — Stripe + subscription status [ADR-0006]

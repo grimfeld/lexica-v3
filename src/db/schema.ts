@@ -104,3 +104,13 @@ export const ttsCache = sqliteTable("tts_cache", {
   mime: text("mime").notNull(),
   createdAt: integer("created_at").notNull(),
 });
+
+/**
+ * Device-local sync bookkeeping (ADR-0010): the `last_synced_at` watermark and
+ * similar key/value state. Local-only (no sync columns) — it's per-device, not
+ * shared. The reconciler/engine consume the watermark to scope the remote pull.
+ */
+export const syncState = sqliteTable("sync_state", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});

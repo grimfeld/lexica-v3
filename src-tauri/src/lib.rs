@@ -35,6 +35,12 @@ pub fn run() {
             sql: include_str!("../migrations/0002_blue_night_nurse.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 4,
+            description: "sync state table",
+            sql: include_str!("../migrations/0003_normal_scarlet_spider.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

@@ -4,7 +4,10 @@ import { BackupControls } from "../backup/BackupControls";
 import { writeBundleToFile, readBundleFromFile } from "../backup/file-io";
 import { ByokSettings } from "../ai/ByokSettings";
 import { keyStore, PROVIDERS, getProvider } from "../ai";
+import { CloudSettings } from "../sync/CloudSettings";
+import { configureCloud, auth, syncNow, currentUrl, signedInEmail } from "../sync/run";
 import { services } from "../services";
+import { useState } from "react";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -12,6 +15,9 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const qc = useQueryClient();
+  // Cloud state is module-held in sync/run; bump to re-read after each action.
+  const [, bump] = useState(0);
+  const refresh = () => bump((n) => n + 1);
 
   const { data: keyedIds = [] } = useQuery({
     queryKey: ["byok-keys"],
@@ -37,6 +43,45 @@ function SettingsPage() {
             await qc.invalidateQueries({ queryKey: ["byok-keys"] });
           }}
           onTest={(id, key) => getProvider(id).validate(key)}
+        />
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xl">Cloud sync</h2>
+        <CloudSettings
+          configuredUrl={currentUrl()}
+          signedInEmail={signedInEmail()}
+          onConfigure={(url) => {
+            configureCloud(url);
+            refresh();
+          }}
+          onSignIn={async (email, password) => {
+            try {
+              await auth()!.signIn(email, password);
+              refresh();
+              return { ok: true };
+            } catch (e) {
+              return { ok: false, error: e instanceof Error ? e.message : "Sign-in failed." };
+            }
+          }}
+          onSignUp={async (email, password) => {
+            try {
+              await auth()!.signUp(email, password);
+              refresh();
+              return { ok: true };
+            } catch (e) {
+              return { ok: false, error: e instanceof Error ? e.message : "Sign-up failed." };
+            }
+          }}
+          onSignOut={() => {
+            auth()!.signOut();
+            refresh();
+          }}
+          onSync={async () => {
+            const r = await syncNow();
+            await qc.invalidateQueries();
+            return { ok: r.ok, error: r.error };
+          }}
         />
       </section>
 
