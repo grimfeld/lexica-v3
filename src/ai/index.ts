@@ -23,17 +23,21 @@ export type { ProviderInfo } from "./providers";
 
 import { getProvider } from "./providers";
 import { getNoteType, listNoteTypes } from "../note-types";
-import { chatClientFor, CHAT_PROVIDERS } from "./chat";
+import { chatClientFor, CHAT_PROVIDERS, type ChatClient } from "./chat";
 import { assistFields, type AssistResult } from "./authoring-assist";
 import {
   extractCandidates,
   type ExtractResult,
   type ExtractableType,
 } from "./extract";
+import { chooseTransport } from "./transport";
+import { proxyChatClient } from "./proxy-client";
+import { getWorkerUrl } from "./config";
+import { subscription } from "../billing/run";
 
 /**
- * The first chat-capable provider the user has a key for, or null. Used to
- * decide whether to show the assist panel and which provider to call.
+ * The first chat-capable provider the user has a BYOK key for, or null. Used to
+ * decide which provider to call on the BYOK path.
  */
 export async function activeChatProvider(): Promise<string | null> {
   for (const id of CHAT_PROVIDERS) {
@@ -42,40 +46,62 @@ export async function activeChatProvider(): Promise<string | null> {
   return null;
 }
 
+/**
+ * Resolve a chat client by transport (ADR-0006): the user's BYOK key wins; else
+ * an active subscriber with a Worker configured uses the app-key path; else
+ * null. The app-key path defaults to anthropic.
+ */
+export async function resolveChatClient(): Promise<ChatClient | null> {
+  const byokProvider = await activeChatProvider();
+  if (byokProvider) {
+    const key = await keyStore.getKey(byokProvider);
+    if (key) return chatClientFor(byokProvider, key);
+  }
+  const token = await subscription.accessToken();
+  const transport = chooseTransport({
+    hasByokKey: false,
+    accessToken: token,
+    workerUrl: getWorkerUrl(),
+  });
+  if (transport.kind === "app-key") {
+    return proxyChatClient(transport.workerUrl, transport.token, "anthropic");
+  }
+  return null;
+}
+
+/** Whether any chat path (BYOK or hosted) is available, for showing AI UI. */
+export async function chatAvailable(): Promise<boolean> {
+  return (await resolveChatClient()) !== null;
+}
+
 export async function chatProviderLabel(): Promise<string | null> {
   const id = await activeChatProvider();
-  return id ? getProvider(id).label : null;
+  if (id) return getProvider(id).label;
+  // Hosted path available?
+  return (await chatAvailable()) ? "Hosted AI" : null;
 }
 
 /**
- * Live authoring-assist runner: resolve the active chat provider's key, build a
+ * Live authoring-assist runner: resolve a chat client (BYOK or hosted), build a
  * client, and fill the given Note Type's fields from a seed. Bound to the type's
  * schema and validated inside assistFields (ADR-0007). Never persists.
  */
 export async function runAssist(typeId: string, seed: string): Promise<AssistResult> {
-  const providerId = await activeChatProvider();
-  if (!providerId) return { ok: false, error: "Add an AI key in Settings first." };
-  const key = await keyStore.getKey(providerId);
-  if (!key) return { ok: false, error: "Add an AI key in Settings first." };
-  const client = chatClientFor(providerId, key);
-  if (!client) return { ok: false, error: "This provider can't draft fields." };
+  const client = await resolveChatClient();
+  if (!client) return { ok: false, error: "Add an AI key in Settings or subscribe." };
   const type = getNoteType(typeId);
   return assistFields(client, type.name, type.fields, seed);
 }
 
 /**
- * Live text-extraction runner: resolve the active chat provider's key, build a
- * client, and extract candidate Notes from a document across all registered
- * types. Each candidate is type-bound and validated inside extractCandidates;
- * nothing is created here (ADR-0007 — candidates default unselected).
+ * Live text-extraction runner: resolve a chat client and extract candidate Notes
+ * from a document across all registered types. Each candidate is type-bound and
+ * validated inside extractCandidates; nothing is created here (ADR-0007 —
+ * candidates default unselected).
  */
 export async function runExtract(doc: string): Promise<ExtractResult> {
-  const providerId = await activeChatProvider();
-  if (!providerId) return { ok: false, error: "Add an AI key in Settings first." };
-  const key = await keyStore.getKey(providerId);
-  if (!key) return { ok: false, error: "Add an AI key in Settings first." };
-  const client = chatClientFor(providerId, key);
-  if (!client) return { ok: false, error: "This provider can't extract cards." };
+  const client = await resolveChatClient();
+  if (!client) return { ok: false, error: "Add an AI key in Settings or subscribe." };
   const types: ExtractableType[] = listNoteTypes().map((t) => ({
     id: t.id,
     name: t.name,

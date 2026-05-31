@@ -8,6 +8,7 @@ import { CloudSettings } from "../sync/CloudSettings";
 import { configureCloud, auth, syncNow, currentUrl, signedInEmail } from "../sync/run";
 import { SubscriptionSettings } from "../billing/SubscriptionSettings";
 import { subscription } from "../billing/run";
+import { getWorkerUrl, setWorkerUrl } from "../ai/config";
 import { services } from "../services";
 import { useState } from "react";
 
@@ -99,6 +100,18 @@ function SettingsPage() {
             return ok;
           }}
         />
+        <label className="flex flex-col gap-1">
+          <span className="text-sm text-[var(--color-ink-muted)]">
+            Hosted AI server URL (for subscribers; leave blank to use your own keys)
+          </span>
+          <input
+            aria-label="AI Worker URL"
+            placeholder="https://lexica-ai-proxy.example.workers.dev"
+            defaultValue={getWorkerUrl() ?? ""}
+            onBlur={(e) => setWorkerUrl(e.target.value)}
+            className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-transparent px-3 py-2"
+          />
+        </label>
       </section>
 
       <section className="flex flex-col gap-2">
